@@ -1,0 +1,43 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://forestbackgroung.png" type="Texture" id=1]
+[ext_resource path="res://Jellee-Roman.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://TileRegion.gd" type="Script" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+size = 60
+font_data = ExtResource( 2 )
+
+[node name="Node2D" type="Node2D"]
+
+[node name="BaseCanvas" type="CanvasLayer" parent="."]
+
+[node name="BackgroundImage" type="TextureRect" parent="BaseCanvas"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource( 1 )
+expand = true
+stretch_mode = 1
+
+[node name="TitleLabel" type="Label" parent="BaseCanvas"]
+anchor_right = 1.0
+margin_top = 30.0
+margin_bottom = 120.0
+size_flags_horizontal = 2
+custom_fonts/font = SubResource( 1 )
+custom_colors/font_color = Color( 0.788235, 0.588235, 0.054902, 1 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 1 )
+custom_colors/font_color_shadow = Color( 0.580392, 0.501961, 0.501961, 1 )
+custom_constants/shadow_offset_x = 3
+custom_constants/shadow_offset_y = 6
+text = "Flatten The Oeuf"
+align = 1
+
+[node name="TileRegion" type="ColorRect" parent="BaseCanvas"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = 400.0
+color = Color( 1, 1, 1, 0 )
+script = ExtResource( 3 )
