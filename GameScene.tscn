@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://forestbackgroung.png" type="Texture" id=1]
 [ext_resource path="res://Jellee-Roman.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://TileRegion.gd" type="Script" id=3]
+[ext_resource path="res://InfectionChart.gd" type="Script" id=4]
 
 [sub_resource type="DynamicFont" id=1]
 size = 60
@@ -41,3 +42,10 @@ anchor_bottom = 1.0
 margin_top = 400.0
 color = Color( 1, 1, 1, 0 )
 script = ExtResource( 3 )
+
+[node name="InfectionChart" type="ColorRect" parent="BaseCanvas"]
+anchor_right = 1.0
+margin_top = 200.0
+margin_bottom = 350.0
+color = Color( 1, 1, 1, 0.576471 )
+script = ExtResource( 4 )

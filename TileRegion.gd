@@ -6,10 +6,18 @@ var numEgg: int = 4
 var rabbitSpeed : float = 2.0 # tiles per second.
 var eggSpeed : float = 0.35 # tiles per second.
 
+var populationSize : float = 1.0
+var infected : float = 0.0
+const decay : float = 0.01
+const infectionRate : float = 0.02
+
 const tileScene = preload ("res://TileBackground.tscn")
 const eggScene = preload ("res://EggPiece.tscn")
 const bunnyScene = preload ("res://BunnyPiece.tscn")
 const highlightScene = preload ("res://Highlight.tscn")
+
+# Node with the infection chart.
+var infectionChart;
 
 enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
 
@@ -53,7 +61,7 @@ class MoveableObject:
 			end = targetObject.objTilePosition
 			
 		# Take a step towards the end position.
-		print ("VV", end, start)
+#		print ("VV", end, start)
 		var distance = (end - start).length ()
 		if distance > 0:
 			progress += delta * speed / distance
@@ -67,7 +75,7 @@ class MoveableObject:
 			objTilePosition = start + progress * (end - start)
 			objTilePosition = Vector2 (round (objTilePosition.x), round (objTilePosition.y))
 			
-			print ("At tp ", objTilePosition)
+#			print ("At tp ", objTilePosition)
 			if targetObject != null and target == ObjectState.Moving:
 				target = ObjectState.Holding
 				carriedObject = targetObject
@@ -92,6 +100,8 @@ var bunny
 var highlight
 var highlightedEgg = null
 
+# Select a single egg and set the highlight on that, if the click
+# point is close enough to it.
 func highlightEgg (tilePos):
 	var closestEgg = null
 	var closestDistance = null
@@ -112,8 +122,25 @@ func highlightEgg (tilePos):
 		highlight.visible = true
 		highlightedEgg = closestEgg
 
+# All pairs of overlapping eggs contribute to the infection rate.
+# Infection slowly recovers.
+func updateInfection (delta):
+	var susceptible = populationSize - infected
+	for egg in allEggs:
+		if egg.target == ObjectState.Static:
+			for otherEgg in allEggs:
+				if otherEgg != egg and otherEgg.target == ObjectState.Static:
+					var pdistance = (egg.objTilePosition - otherEgg.objTilePosition).length ()
+					if pdistance < 0.1:
+						infected += infectionRate * ((infected + 0.01) * susceptible) * delta
+
+	infected -= infected * decay * delta
+	infectionChart.addPoint (infected, delta)
+
 func _ready():
 
+	infectionChart = get_parent ().get_node ("InfectionChart")
+	
 	highlight = highlightScene.instance ()
 	highlight.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
 	highlight.visible = false
@@ -127,7 +154,7 @@ func _ready():
 			tile.rect_position = Vector2 (float (x) / gridN, float (y) / gridN) * rect_size
 			tile.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
 			add_child (tile)
-			print ("Tile", tile.rect_position)
+#			print ("Tile", tile.rect_position)
 
 	for i in range (numEgg):
 		var egg = MoveableObject.new (eggScene.instance (), Vector2 (randi () % gridN, randi () % gridN), self)
@@ -143,6 +170,8 @@ func _process(delta):
 	if bunny.target == ObjectState.Moving or bunny.target == ObjectState.Carrying:
 		bunny.move (delta, rabbitSpeed)
 		
+	updateInfection (delta)
+		
 	# Find any eggs that can move.
 	for egg in allEggs:
 		if egg.target == ObjectState.Static:
@@ -157,7 +186,7 @@ func _process(delta):
 					var pdy = int (posDiff.y)
 					var pdistance = posDiff.length ()
 					if (pdx == 0 and pdy != 0) or (pdx != 0 and pdy == 0) or (pdx != 0 and abs (pdx) == abs (pdy)):
-						print ("Valid target ", egg, otherEgg)
+#						print ("Valid target ", egg, otherEgg)
 						if bestOther == null or pdistance < bestDistance:
 							bestOther = otherEgg
 							bestDistance = pdistance
