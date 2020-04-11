@@ -12,7 +12,7 @@ const decay : float = 0.01
 const infectionRate : float = 0.02
 
 enum GameOver { Running, LossCountdown, VictoryCountdown, GameOver }
-var gameOverState = GameOver.Running
+var gameOverState = GameOver.GameOver
 const lossTime = 10;
 const winTime = 5;
 var countdownTimer;
@@ -26,6 +26,8 @@ const highlightScene = preload ("res://Highlight.tscn")
 var infectionChart
 # Node with the text field.
 var feedbackLabel
+# Controls container, for managing settings outside of game play
+var controlsContainer
 
 enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
 
@@ -135,11 +137,14 @@ func highlightEgg (tilePos):
 func updateInfection (delta):
 	var susceptible = populationSize - infected
 	for egg in allEggs:
+		egg.objInstance.get_node ("EggParticles").visible = false
 		if egg.target == ObjectState.Static:
 			for otherEgg in allEggs:
 				if otherEgg != egg and otherEgg.target == ObjectState.Static:
 					var pdistance = (egg.objTilePosition - otherEgg.objTilePosition).length ()
 					if pdistance < 0.1:
+						egg.objInstance.get_node ("EggParticles").visible = true
+						egg.objInstance.get_node ("EggParticles").speed_scale = 0.1 + 2.0 * infected
 						infected += infectionRate * ((infected + 0.01) * susceptible) * delta
 
 	infected -= infected * decay * delta
@@ -174,6 +179,7 @@ func stableEggScenario ():
 func checkEndConditions (delta):
 	if gameOverState == GameOver.Running:
 #		print ("II", infected, infectionChart.threshold)
+		feedbackLabel.text = ""
 		if infected > infectionChart.threshold:
 			gameOverState = GameOver.LossCountdown
 			countdownTimer = lossTime
@@ -243,18 +249,25 @@ func playGame (delta):
 		if egg.target == ObjectState.Moving:
 			egg.move (delta, eggSpeed)
 	
-func _ready():
-
-	infectionChart = get_parent ().get_node ("InfectionChart")
-	feedbackLabel = get_parent ().get_node ("FeedbackLabel")
-	feedbackLabel.text = ""
+func setupGame ():
+	print ("Ready")
 	
+	infected = 0.0
+	
+	# clear any remants of previous game.
+	for n in get_children ():
+		remove_child (n)
+		n.queue_free ()
+	allEggs = []
+	
+	infectionChart.reset ()
+	
+	# add highlight marker
 	highlight = highlightScene.instance ()
 	highlight.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
-	highlight.visible = false
+	highlight.visible = false	
 	add_child (highlight)
-	
-	print ("Ready")
+
 	# place a grid of tiles.
 	for y in range (gridN):
 		for x in range (gridN):
@@ -264,38 +277,60 @@ func _ready():
 			add_child (tile)
 #			print ("Tile", tile.rect_position)
 
+	# place eggs
 	for i in range (numEgg):
 		var egg = MoveableObject.new (eggScene.instance (), Vector2 (randi () % gridN, randi () % gridN), self)
 		allEggs.append (egg)
 		add_child (egg.objInstance)
 	
+	# place player
 	bunny = MoveableObject.new (bunnyScene.instance (), Vector2 (gridN / 2, gridN / 2), self)
 	bunny.start = bunny.objTilePosition
 	add_child (bunny.objInstance)
+
+func _ready():
+
+	infectionChart = get_parent ().get_node ("InfectionChart")
+	feedbackLabel = get_parent ().get_node ("FeedbackLabel")
+	feedbackLabel.text = ""
+	controlsContainer = get_parent ().get_node ("ControlsContainer")
+	
 	
 func _process(delta):
+	
+	visible = false
+	controlsContainer.visible = false
+	
 	if gameOverState == GameOver.Running or gameOverState == GameOver.LossCountdown or gameOverState == GameOver.VictoryCountdown:
+		visible = true
 		playGame (delta)
+	elif gameOverState == GameOver.GameOver:
+		controlsContainer.visible = true
 
 func _input(event):
-	if event is InputEventMouseMotion:
-		if bunny.target == ObjectState.Static:
-			highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
-	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT:
-			var tilePosition = ((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size)
-			var intTilePosition = Vector2 (int (tilePosition.x), int (tilePosition.y))
-			if event.pressed:
-				print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
-				if bunny.target == ObjectState.Static:
-					highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
-					bunny.end = intTilePosition
-					bunny.target = ObjectState.Moving
-					bunny.targetObject = highlightedEgg
-					bunny.progress = 0.0
-				if bunny.target == ObjectState.Holding:
-					bunny.end = intTilePosition
-					bunny.target = ObjectState.Carrying
-					bunny.targetObject = null
-					bunny.progress = 0.0
+	if gameOverState == GameOver.Running or gameOverState == GameOver.LossCountdown or gameOverState == GameOver.VictoryCountdown:
+		if event is InputEventMouseMotion:
+			if bunny.target == ObjectState.Static:
+				highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
+		if event is InputEventMouseButton:
+			if event.button_index == BUTTON_LEFT:
+				var tilePosition = ((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size)
+				var intTilePosition = Vector2 (int (tilePosition.x), int (tilePosition.y))
+				if event.pressed:
+					print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
+					if bunny.target == ObjectState.Static:
+						highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
+						bunny.end = intTilePosition
+						bunny.target = ObjectState.Moving
+						bunny.targetObject = highlightedEgg
+						bunny.progress = 0.0
+					if bunny.target == ObjectState.Holding:
+						bunny.end = intTilePosition
+						bunny.target = ObjectState.Carrying
+						bunny.targetObject = null
+						bunny.progress = 0.0
+
+func On_StartButton_pressed():
+	gameOverState = GameOver.Running
+	setupGame ()
 

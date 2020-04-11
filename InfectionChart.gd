@@ -6,6 +6,10 @@ var points = []
 var timeSinceLast = 0.0
 var threshold = 0.7
 
+func reset ():
+	points = []
+	update ()
+
 func addPoint (v, delta):
 	timeSinceLast += delta
 	if timeSinceLast > PlotInterval:
@@ -44,8 +48,3 @@ func _draw():
 			draw_rect (Rect2 (end - 0.5 * markerSize, markerSize), markerColour, 1)
 			start = end
 		
-func _ready():
-	pass # Replace with function body.
-
-#func _process(delta):
-#	pass
