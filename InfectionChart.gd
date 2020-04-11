@@ -26,10 +26,10 @@ func _draw():
 	# border of chart.
 	draw_rect (Rect2 (Vector2 (margin, margin) * rect_size, Vector2 (1.0 - 2.0 * margin, 1.0 - 2.0 * margin) * rect_size), Color (0.05, 0.05, 0.05), 1)
 	# threshold line
-	draw_line (Vector2 (margin, margin + (1.0 - 2.0 * margin) * (1.0 - threshold)) * rect_size, Vector2 (margin + 1.0 - 2.0 * margin, margin + (1.0 - 2.0 * margin) * (1.0 - threshold)) * rect_size, Color (0.75, 0.55, 0.05), 1)
+	draw_line (Vector2 (margin, margin + (1.0 - 2.0 * margin) * (1.0 - threshold)) * rect_size, Vector2 (margin + 1.0 - 2.0 * margin, margin + (1.0 - 2.0 * margin) * (1.0 - threshold)) * rect_size, Color (0.75, 0.55, 0.05), 3, true)
 	# vertical lines.
 	for i in range (9):
-		draw_line (Vector2 (margin + (1.0 - 2.0 * margin) * (float (i + 1) / 10), margin) * rect_size, Vector2 (margin + (1.0 - 2.0 * margin) * (float (i + 1) / 10), margin + 1.0 - 2.0 * margin) * rect_size, Color (0.45, 0.45, 0.45), 1)
+		draw_line (Vector2 (margin + (1.0 - 2.0 * margin) * (float (i + 1) / 10), margin) * rect_size, Vector2 (margin + (1.0 - 2.0 * margin) * (float (i + 1) / 10), margin + 1.0 - 2.0 * margin) * rect_size, Color (0.45, 0.45, 0.45), 3, true)
 	
 	# plot points.
 	var markerSize = Vector2 (4.0, 4.0)

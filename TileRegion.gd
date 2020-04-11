@@ -11,13 +11,21 @@ var infected : float = 0.0
 const decay : float = 0.01
 const infectionRate : float = 0.02
 
+enum GameOver { Running, LossCountdown, VictoryCountdown, GameOver }
+var gameOverState = GameOver.Running
+const lossTime = 10;
+const winTime = 5;
+var countdownTimer;
+
 const tileScene = preload ("res://TileBackground.tscn")
 const eggScene = preload ("res://EggPiece.tscn")
 const bunnyScene = preload ("res://BunnyPiece.tscn")
 const highlightScene = preload ("res://Highlight.tscn")
 
 # Node with the infection chart.
-var infectionChart;
+var infectionChart
+# Node with the text field.
+var feedbackLabel
 
 enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
 
@@ -137,40 +145,74 @@ func updateInfection (delta):
 	infected -= infected * decay * delta
 	infectionChart.addPoint (infected, delta)
 
-func _ready():
+# Check to see if eggs are all stable.
+func stableEggScenario ():
+	var stable = true
+	for egg in allEggs:
+		if egg.target == ObjectState.Static:
+			for otherEgg in allEggs:
+#				print ("E ", egg, otherEgg)
+				if egg != otherEgg:
+					if otherEgg.target == ObjectState.Static:
+						var posDiff = egg.objTilePosition - otherEgg.objTilePosition
+						var pdx = int (posDiff.x)
+						var pdy = int (posDiff.y)
+#						print ("PD " +  str (pdx) + " " + str (pdy) + " " + str (posDiff))
+						if (pdx == 0 and pdy == 0) or (pdx == 0 and pdy != 0) or (pdx != 0 and pdy == 0) or (pdx != 0 and abs (pdx) == abs (pdy)):
+							stable = false
+							break
+					else:
+						stable = false
+						break
+		else:
+			stable = false
+			break
+#	print ("St ", stable)
+	return stable
 
-	infectionChart = get_parent ().get_node ("InfectionChart")
-	
-	highlight = highlightScene.instance ()
-	highlight.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
-	highlight.visible = false
-	add_child (highlight)
-	
-	print ("Ready")
-	# place a grid of tiles.
-	for y in range (gridN):
-		for x in range (gridN):
-			var tile = tileScene.instance ()
-			tile.rect_position = Vector2 (float (x) / gridN, float (y) / gridN) * rect_size
-			tile.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
-			add_child (tile)
-#			print ("Tile", tile.rect_position)
+# Manage victory and loss situation
+func checkEndConditions (delta):
+	if gameOverState == GameOver.Running:
+#		print ("II", infected, infectionChart.threshold)
+		if infected > infectionChart.threshold:
+			gameOverState = GameOver.LossCountdown
+			countdownTimer = lossTime
+		elif infected < infectionChart.threshold:
+			if stableEggScenario ():
+				gameOverState = GameOver.VictoryCountdown
+				countdownTimer = 0 # count up in this case.
+	elif gameOverState == GameOver.LossCountdown:
+		countdownTimer -= delta
+		feedbackLabel.text = str (int (countdownTimer))
+		feedbackLabel.set ("custom_colors/font_color", Color (1,0,0))
+		if countdownTimer <= 0:
+			feedbackLabel.text = "Resistance oeuferwhelmed!"
+			gameOverState = GameOver.GameOver
+		elif infected < infectionChart.threshold:
+			gameOverState = GameOver.Running
+			feedbackLabel.text = ""
+	elif gameOverState == GameOver.VictoryCountdown:
+		countdownTimer += delta
+		feedbackLabel.text = str (int (countdownTimer))
+		feedbackLabel.set ("custom_colors/font_color", Color (0,1,0))
+		if countdownTimer > winTime:
+			feedbackLabel.text = "Victory! Game oeufre"
+			gameOverState = GameOver.GameOver
+		elif not stableEggScenario ():
+			gameOverState = GameOver.Running
+			feedbackLabel.text = ""
+	else:
+		pass
 
-	for i in range (numEgg):
-		var egg = MoveableObject.new (eggScene.instance (), Vector2 (randi () % gridN, randi () % gridN), self)
-		allEggs.append (egg)
-		add_child (egg.objInstance)
-	
-	bunny = MoveableObject.new (bunnyScene.instance (), Vector2 (gridN / 2, gridN / 2), self)
-	bunny.start = bunny.objTilePosition
-	add_child (bunny.objInstance)
-	
-func _process(delta):
+# The body of the game loop
+func playGame (delta):
 	# Move the rabbit.
 	if bunny.target == ObjectState.Moving or bunny.target == ObjectState.Carrying:
 		bunny.move (delta, rabbitSpeed)
 		
 	updateInfection (delta)
+	
+	checkEndConditions (delta)
 		
 	# Find any eggs that can move.
 	for egg in allEggs:
@@ -200,6 +242,40 @@ func _process(delta):
 	for egg in allEggs:
 		if egg.target == ObjectState.Moving:
 			egg.move (delta, eggSpeed)
+	
+func _ready():
+
+	infectionChart = get_parent ().get_node ("InfectionChart")
+	feedbackLabel = get_parent ().get_node ("FeedbackLabel")
+	feedbackLabel.text = ""
+	
+	highlight = highlightScene.instance ()
+	highlight.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
+	highlight.visible = false
+	add_child (highlight)
+	
+	print ("Ready")
+	# place a grid of tiles.
+	for y in range (gridN):
+		for x in range (gridN):
+			var tile = tileScene.instance ()
+			tile.rect_position = Vector2 (float (x) / gridN, float (y) / gridN) * rect_size
+			tile.rect_size = Vector2 (1.0 / gridN, 1.0 / gridN) * rect_size
+			add_child (tile)
+#			print ("Tile", tile.rect_position)
+
+	for i in range (numEgg):
+		var egg = MoveableObject.new (eggScene.instance (), Vector2 (randi () % gridN, randi () % gridN), self)
+		allEggs.append (egg)
+		add_child (egg.objInstance)
+	
+	bunny = MoveableObject.new (bunnyScene.instance (), Vector2 (gridN / 2, gridN / 2), self)
+	bunny.start = bunny.objTilePosition
+	add_child (bunny.objInstance)
+	
+func _process(delta):
+	if gameOverState == GameOver.Running or gameOverState == GameOver.LossCountdown or gameOverState == GameOver.VictoryCountdown:
+		playGame (delta)
 
 func _input(event):
 	if event is InputEventMouseMotion:
@@ -223,5 +299,3 @@ func _input(event):
 					bunny.targetObject = null
 					bunny.progress = 0.0
 
-func _draw():
-    draw_line(Vector2(0,0), Vector2(50, 50), Color(255, 0, 0), 1)
