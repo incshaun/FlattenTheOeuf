@@ -315,7 +315,7 @@ func _input(event):
 		if event is InputEventMouseButton:
 			if event.button_index == BUTTON_LEFT:
 				var tilePosition = ((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size)
-				var intTilePosition = Vector2 (int (tilePosition.x), int (tilePosition.y))
+				var intTilePosition = Vector2 (max (min (int (tilePosition.x), gridN), 0), max (min (int (tilePosition.y), gridN), 0))
 				if event.pressed:
 					print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
 					if bunny.target == ObjectState.Static:
