@@ -8,13 +8,13 @@ var eggSpeed : float = 0.35 # tiles per second.
 
 var populationSize : float = 1.0
 var infected : float = 0.0
-const decay : float = 0.01
-const infectionRate : float = 0.02
+var decay : float = 0.01
+var infectionRate : float = 0.02
 
 enum GameOver { Running, LossCountdown, VictoryCountdown, GameOver }
 var gameOverState = GameOver.GameOver
-const lossTime = 10;
-const winTime = 5;
+var lossTime = 10;
+var winTime = 5;
 var countdownTimer;
 
 const tileScene = preload ("res://TileBackground.tscn")
@@ -28,6 +28,46 @@ var infectionChart
 var feedbackLabel
 # Controls container, for managing settings outside of game play
 var controlsContainer
+# Button with level select options.
+var levelSelectButton
+
+class LevelDescription:
+	var levelname
+	var gridN
+	var numEgg
+	var rabbitSpeed
+	var eggSpeed
+	var decay
+	var infectionRate
+	var lossTime
+	var winTime
+	
+	func _init (n, g, ne, rs = 2.0, es = 0.35, de = 0.01, inf = 0.02, lt = 10, wt = 5):
+		levelname = n
+		gridN = g
+		numEgg = ne
+		rabbitSpeed = rs
+		eggSpeed = es
+		decay = de
+		infectionRate = inf
+		lossTime = lt
+		winTime = wt
+
+	func setConditions (gameObject):
+		gameObject.gridN = gridN
+		gameObject.numEgg = numEgg
+		gameObject.rabbitSpeed = rabbitSpeed
+		gameObject.eggSpeed = eggSpeed
+		gameObject.decay = decay
+		gameObject.infectionRate = infectionRate
+		gameObject.lossTime = lossTime
+		gameObject.winTime = winTime
+
+var levels = [ \
+  LevelDescription.new ("Tutorial", 3, 2, 2.0, 0.01), \
+  LevelDescription.new ("Over Easy", 5, 3, 2.0, 0.5), \
+  LevelDescription.new ("Omelette", 6, 6, 2.0, 0.75), \
+]
 
 enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
 
@@ -192,7 +232,7 @@ func checkEndConditions (delta):
 		feedbackLabel.text = str (int (countdownTimer))
 		feedbackLabel.set ("custom_colors/font_color", Color (1,0,0))
 		if countdownTimer <= 0:
-			feedbackLabel.text = "Resistance oeuferwhelmed!"
+			feedbackLabel.text = "Defences oeuferwhelmed!"
 			gameOverState = GameOver.GameOver
 		elif infected < infectionChart.threshold:
 			gameOverState = GameOver.Running
@@ -252,6 +292,9 @@ func playGame (delta):
 func setupGame ():
 	print ("Ready")
 	
+	var level = levels[levelSelectButton.get_selected_id ()]
+	level.setConditions (self)
+	
 	infected = 0.0
 	
 	# clear any remants of previous game.
@@ -288,13 +331,19 @@ func setupGame ():
 	bunny.start = bunny.objTilePosition
 	add_child (bunny.objInstance)
 
+func addLevels ():
+	levelSelectButton.clear ()
+	for l in levels:
+		levelSelectButton.add_item (l.levelname)
+
 func _ready():
 
 	infectionChart = get_parent ().get_node ("InfectionChart")
 	feedbackLabel = get_parent ().get_node ("FeedbackLabel")
 	feedbackLabel.text = ""
-	controlsContainer = get_parent ().get_node ("ControlsContainer")
-	
+	controlsContainer = get_parent ().get_node ("ControlBox")
+	levelSelectButton = get_parent ().get_node ("ControlBox/LevelSelectButton")
+	addLevels ()
 	
 func _process(delta):
 	
