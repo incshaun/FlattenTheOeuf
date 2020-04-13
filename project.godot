@@ -17,6 +17,7 @@ _global_script_class_icons={
 
 config/name="FlattenTheOeuf"
 run/main_scene="res://GameScene.tscn"
+boot_splash/image="res://bunny1.png"
 config/icon="res://icon.png"
 
 [display]

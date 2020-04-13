@@ -18,7 +18,10 @@ var winTime = 5;
 var countdownTimer;
 
 const tileScene = preload ("res://TileBackground.tscn")
-const eggScene = preload ("res://EggPiece.tscn")
+const eggScenes = [ preload ("res://EggPiece1.tscn"), \
+				preload ("res://EggPiece2.tscn"), \
+				preload ("res://EggPiece3.tscn"), \
+				preload ("res://EggPiece4.tscn") ]
 const bunnyScene = preload ("res://BunnyPiece.tscn")
 const highlightScene = preload ("res://Highlight.tscn")
 
@@ -49,6 +52,7 @@ class LevelDescription:
 	var rank
 	var gridN
 	var numEgg
+	var startingPoints
 	var rabbitSpeed
 	var eggSpeed
 	var decay
@@ -56,11 +60,12 @@ class LevelDescription:
 	var lossTime
 	var winTime
 	
-	func _init (n, r, g, ne, rs = 2.0, es = 0.35, de = 0.01, inf = 0.02, lt = 10, wt = 5):
+	func _init (n, r, g, ne, initpos = null, rs = 2.0, es = 0.35, de = 0.01, inf = 0.02, lt = 10, wt = 5):
 		levelname = n
 		rank = r
 		gridN = g
 		numEgg = ne
+		startingPoints = initpos
 		rabbitSpeed = rs
 		eggSpeed = es
 		decay = de
@@ -79,11 +84,11 @@ class LevelDescription:
 		gameObject.winTime = winTime
 
 var levels = [ \
-  LevelDescription.new ("Tutorial", "Leghorn", 3, 2, 2.0, 0.1), \
-  LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, 2.0, 0.5), \
-  LevelDescription.new ("Scrambled", "Dasypeltis scabra", 5, 4, 2.0, 0.75), \
-  LevelDescription.new ("Oogenera", "Paleggontologist", 10, 8, 2.0, 0.75), \
-  LevelDescription.new ("Omelette", "Deakin Game Development Graduate", 6, 6, 2.0, 0.75), \
+  LevelDescription.new ("Tutorial", "Leghorn", 3, 2, [Vector2 (0, 2), Vector2 (2, 0)], 2.0, 0.1, 0.01, 0.02, 10, 1), \
+  LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, [Vector2 (1, 4), Vector2 (3, 2), Vector2 (4, 2)], 2.0, 0.5), \
+  LevelDescription.new ("Scrambled", "Dasypeltis scabra", 5, 4, [Vector2 (3, 0), Vector2 (0, 3), Vector2 (0, 2), Vector2 (2, 4)], 2.0, 0.75), \
+  LevelDescription.new ("Oogenera", "Paleggontologist", 10, 8, [Vector2 (3, 0), Vector2 (5, 3), Vector2 (5, 2), Vector2 (7, 9), Vector2 (6, 8), Vector2 (5, 5), Vector2 (4, 7), Vector2 (0, 6)], 2.0, 0.75), \
+  LevelDescription.new ("Omelette", "Deakin Game Development Graduate", 6, 6, [Vector2 (2, 5), Vector2 (4, 1), Vector2 (0, 1), Vector2 (5, 3), Vector2 (1, 3), Vector2 (5, 5)], 2.0, 0.75), \
 ]
 # current level played.
 var currentLevel = 0
@@ -143,19 +148,19 @@ class MoveableObject:
 				if direction.length () > 0.0:
 					var angle = atan2 (direction.y, direction.x) / PI
 					if angle < -0.62:
-						texIndex = 7
+						texIndex = 1
 					elif angle < -0.37:
-						texIndex = 6
+						texIndex = 2
 					elif angle < -0.12:
-						texIndex = 5
+						texIndex = 3
 					elif angle < 0.12:
 						texIndex = 4
 					elif angle < 0.37:
-						texIndex = 3
+						texIndex = 5
 					elif angle < 0.62:
-						texIndex = 2
+						texIndex = 6
 					elif angle < 0.87:
-						texIndex = 1
+						texIndex = 7
 					else:
 						texIndex = 0
 				
@@ -360,7 +365,7 @@ func playGame (delta):
 		egg.move (delta, eggSpeed)
 	
 func setupGame ():
-	print ("Ready")
+#	print ("Ready")
 	
 	currentLevel = levelSelectButton.get_selected_id ()
 	var level = levels [currentLevel]
@@ -393,7 +398,11 @@ func setupGame ():
 
 	# place eggs
 	for i in range (numEgg):
-		var egg = MoveableObject.new (eggScene.instance (), Vector2 (randi () % gridN, randi () % gridN), self)
+		var eggpos = Vector2 (randi () % gridN, randi () % gridN)
+		if levels[currentLevel].startingPoints.size () > i:
+			eggpos = levels[currentLevel].startingPoints[i]
+		print ("Starting", eggpos)
+		var egg = MoveableObject.new (eggScenes[i % eggScenes.size ()].instance (), eggpos, self)
 		allEggs.append (egg)
 		add_child (egg.objInstance)
 	
@@ -465,7 +474,7 @@ func _input(event):
 				var tilePosition = ((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size)
 				var intTilePosition = Vector2 (max (min (int (tilePosition.x), gridN), 0), max (min (int (tilePosition.y), gridN), 0))
 				if event.pressed:
-					print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
+#					print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
 					if bunny.target == ObjectState.Static:
 						highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
 						bunny.end = intTilePosition

@@ -150,6 +150,7 @@ custom_constants/shadow_offset_y = 3
 align = 1
 
 [node name="ControlMovie" type="Control" parent="BaseCanvas"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 
@@ -157,7 +158,6 @@ anchor_bottom = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 stream = ExtResource( 5 )
-autoplay = true
 expand = false
 
 [node name="Button" type="Button" parent="BaseCanvas/ControlMovie"]
