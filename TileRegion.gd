@@ -35,6 +35,14 @@ var controlMovie
 var videoPlayer
 # High score
 var achievementLabel
+# Tutorial region
+var tutorialRegion
+
+# List of images to show in the tutorial level.
+var tutorialTextures
+const tutorialCycleTime = 2.0
+var tutorialImageDuration = 0.0
+var activeTutorialImage = 0
 
 class LevelDescription:
 	var levelname
@@ -71,7 +79,7 @@ class LevelDescription:
 		gameObject.winTime = winTime
 
 var levels = [ \
-  LevelDescription.new ("Tutorial", "Leghorn", 3, 2, 2.0, 0.01), \
+  LevelDescription.new ("Tutorial", "Leghorn", 3, 2, 2.0, 0.1), \
   LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, 2.0, 0.5), \
   LevelDescription.new ("Scrambled", "Dasypeltis scabra", 5, 4, 2.0, 0.75), \
   LevelDescription.new ("Oogenera", "Paleggontologist", 10, 8, 2.0, 0.75), \
@@ -300,6 +308,18 @@ func checkEndConditions (delta):
 	else:
 		pass
 
+func updateTutorialImages (delta):
+	if currentLevel == 0: # tutorial
+		tutorialRegion.visible = true
+		tutorialImageDuration += delta
+		if tutorialImageDuration > tutorialCycleTime:
+			tutorialImageDuration = 0
+			activeTutorialImage = (activeTutorialImage + 1) % tutorialTextures.size ()
+		tutorialRegion.texture = tutorialTextures[activeTutorialImage]
+	else:
+		tutorialRegion.visible = false
+
+	
 # The body of the game loop
 func playGame (delta):
 	# Move the rabbit.
@@ -308,6 +328,8 @@ func playGame (delta):
 	updateInfection (delta)
 	
 	checkEndConditions (delta)
+		
+	updateTutorialImages (delta)
 		
 	# Find any eggs that can move.
 	for egg in allEggs:
@@ -413,6 +435,12 @@ func _ready():
 	controlMovie = get_parent ().get_node ("ControlMovie")
 	videoPlayer = get_parent ().get_node ("ControlMovie/VideoPlayer")
 	achievementLabel = get_parent ().get_node ("ControlBox/AchievementLabel")
+	tutorialRegion = get_parent ().get_node ("TutorialRegion")
+	
+	tutorialTextures = [ preload ("res://tutorial1.png"), \
+						preload ("res://tutorial2.png"), \
+						preload ("res://tutorial3.png"), \
+						preload ("res://tutorial4.png"), ]
 	
 func _process(delta):
 	
@@ -424,6 +452,8 @@ func _process(delta):
 		playGame (delta)
 	elif gameOverState == GameOver.GameOver:
 		controlsContainer.visible = true
+		tutorialRegion.visible = false
+
 
 func _input(event):
 	if gameOverState == GameOver.Running or gameOverState == GameOver.LossCountdown or gameOverState == GameOver.VictoryCountdown:
