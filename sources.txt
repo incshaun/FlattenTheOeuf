@@ -7,3 +7,4 @@ Pencil, https://www.onlygfx.com/wp-content/uploads/2017/09/pencil-scribble-textu
 
 ffmpeg for transcoding: ffmpeg -i intromovie.avi -i audio.flac -qscale:v 4 -filter:a "volume=2.5" intromovie.webm
 
+Wicker, https://cc0textures.com/view?id=Wicker004, The assets on CC0 Textures however are licensed under the Creative Commons CC0 License.

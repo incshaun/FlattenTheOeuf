@@ -73,6 +73,8 @@ class LevelDescription:
 var levels = [ \
   LevelDescription.new ("Tutorial", "Leghorn", 3, 2, 2.0, 0.01), \
   LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, 2.0, 0.5), \
+  LevelDescription.new ("Scrambled", "Dasypeltis scabra", 5, 4, 2.0, 0.75), \
+  LevelDescription.new ("Oogenera", "Paleggontologist", 10, 8, 2.0, 0.75), \
   LevelDescription.new ("Omelette", "Deakin Game Development Graduate", 6, 6, 2.0, 0.75), \
 ]
 # current level played.
@@ -89,6 +91,9 @@ class MoveableObject:
 	# the tile coordinates of the current position
 	var objTilePosition
 	
+	# texture array.
+	var textures
+	
 	# the state of the object
 	var target
 	# if heading towards object, then this is the target.
@@ -103,12 +108,13 @@ class MoveableObject:
 	var progress
 	
 	# constructor.
-	func _init (i, pos, reg):
+	func _init (i, pos, reg, texs = null):
 		region = reg
 		objInstance = i
 		objTilePosition = pos
 		start = pos
 		target = ObjectState.Static
+		textures = texs
 		setPosition ()
 		
 	# update display position to match objTilePosition
@@ -120,41 +126,70 @@ class MoveableObject:
 		# If tracking an object, then update end position.
 		if targetObject != null:
 			end = targetObject.objTilePosition
-			
-		# Take a step towards the end position.
-#		print ("VV", end, start)
-		var distance = (end - start).length ()
-		if distance > 0:
-			progress += delta * speed / distance
-		else:
-			progress = 1.0
-			
-		# If reached the target, take actions based on state.
-		if progress >= 1.0:
-			progress = 1.0
-			start = end
-			objTilePosition = start + progress * (end - start)
-			objTilePosition = Vector2 (round (objTilePosition.x), round (objTilePosition.y))
-			
-#			print ("At tp ", objTilePosition)
-			if targetObject != null and target == ObjectState.Moving:
-				target = ObjectState.Holding
-				carriedObject = targetObject
-				carriedObject.target = ObjectState.BeingCarried
-				carriedObject.objInstance.visible = false
-				targetObject = null
-			elif carriedObject != null and target == ObjectState.Carrying:
-				target = ObjectState.Static
-				carriedObject.objTilePosition = objTilePosition
-				carriedObject.setPosition ()
-				carriedObject.objInstance.visible = true
-				carriedObject.target = ObjectState.Static
-				carriedObject = null
+		
+		if textures != null:
+			var texIndex = 0
+			if end != null and start != null:
+				var direction = end - start
+
+				if direction.length () > 0.0:
+					var angle = atan2 (direction.y, direction.x) / PI
+					if angle < -0.62:
+						texIndex = 7
+					elif angle < -0.37:
+						texIndex = 6
+					elif angle < -0.12:
+						texIndex = 5
+					elif angle < 0.12:
+						texIndex = 4
+					elif angle < 0.37:
+						texIndex = 3
+					elif angle < 0.62:
+						texIndex = 2
+					elif angle < 0.87:
+						texIndex = 1
+					else:
+						texIndex = 0
+				
+			objInstance.texture = textures[texIndex]
+			if target == ObjectState.Holding or target == ObjectState.Carrying:
+				objInstance.texture = textures[texIndex + 8]
+
+		if target == ObjectState.Moving or target == ObjectState.Carrying:
+			# Take a step towards the end position.
+	#		print ("VV", end, start)
+			var distance = (end - start).length ()
+			if distance > 0:
+				progress += delta * speed / distance
 			else:
-				target = ObjectState.Static
-		else:
-			objTilePosition = start + progress * (end - start)
-		setPosition ()
+				progress = 1.0
+				
+			# If reached the target, take actions based on state.
+			if progress >= 1.0:
+				progress = 1.0
+				start = end
+				objTilePosition = start + progress * (end - start)
+				objTilePosition = Vector2 (round (objTilePosition.x), round (objTilePosition.y))
+				
+	#			print ("At tp ", objTilePosition)
+				if targetObject != null and target == ObjectState.Moving:
+					target = ObjectState.Holding
+					carriedObject = targetObject
+					carriedObject.target = ObjectState.BeingCarried
+					carriedObject.objInstance.visible = false
+					targetObject = null
+				elif carriedObject != null and target == ObjectState.Carrying:
+					target = ObjectState.Static
+					carriedObject.objTilePosition = objTilePosition
+					carriedObject.setPosition ()
+					carriedObject.objInstance.visible = true
+					carriedObject.target = ObjectState.Static
+					carriedObject = null
+				else:
+					target = ObjectState.Static
+			else:
+				objTilePosition = start + progress * (end - start)
+			setPosition ()
 
 var allEggs = []
 var bunny
@@ -267,8 +302,7 @@ func checkEndConditions (delta):
 # The body of the game loop
 func playGame (delta):
 	# Move the rabbit.
-	if bunny.target == ObjectState.Moving or bunny.target == ObjectState.Carrying:
-		bunny.move (delta, rabbitSpeed)
+	bunny.move (delta, rabbitSpeed)
 		
 	updateInfection (delta)
 	
@@ -300,8 +334,7 @@ func playGame (delta):
 
 	# Move the eggs.
 	for egg in allEggs:
-		if egg.target == ObjectState.Moving:
-			egg.move (delta, eggSpeed)
+		egg.move (delta, eggSpeed)
 	
 func setupGame ():
 	print ("Ready")
@@ -342,7 +375,24 @@ func setupGame ():
 		add_child (egg.objInstance)
 	
 	# place player
-	bunny = MoveableObject.new (bunnyScene.instance (), Vector2 (gridN / 2, gridN / 2), self)
+	bunny = MoveableObject.new (bunnyScene.instance (), Vector2 (gridN / 2, gridN / 2), self, [\
+	preload ("res://bunny1.png"), \
+	preload ("res://bunny2.png"), \
+	preload ("res://bunny3.png"), \
+	preload ("res://bunny4.png"), \
+	preload ("res://bunny5.png"), \
+	preload ("res://bunny6.png"), \
+	preload ("res://bunny7.png"), \
+	preload ("res://bunny8.png"), \
+	preload ("res://bunnycarry1.png"), \
+	preload ("res://bunnycarry2.png"), \
+	preload ("res://bunnycarry3.png"), \
+	preload ("res://bunnycarry4.png"), \
+	preload ("res://bunnycarry5.png"), \
+	preload ("res://bunnycarry6.png"), \
+	preload ("res://bunnycarry7.png"), \
+	preload ("res://bunnycarry8.png") \
+	])
 	bunny.start = bunny.objTilePosition
 	add_child (bunny.objInstance)
 

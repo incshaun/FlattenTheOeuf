@@ -4,7 +4,7 @@
 [ext_resource path="res://Jellee-Roman.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://InfectionChart.gd" type="Script" id=3]
 [ext_resource path="res://TileRegion.gd" type="Script" id=4]
-[ext_resource path="res://intromovie.ogv" type="VideoStream" id=5]
+[ext_resource path="res://intromovie.webm" type="VideoStream" id=5]
 
 [sub_resource type="DynamicFont" id=1]
 size = 60
