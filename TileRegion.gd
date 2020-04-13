@@ -231,6 +231,7 @@ func updateInfection (delta):
 					if pdistance < 0.1:
 						egg.objInstance.get_node ("EggParticles").visible = true
 						egg.objInstance.get_node ("EggParticles").speed_scale = 0.1 + 2.0 * infected
+						egg.objInstance.get_node ("EggParticles").position = Vector2 (0.5 / gridN, 0.5 / gridN) * rect_size
 						infected += infectionRate * ((infected + 0.01) * susceptible) * delta
 
 	infected -= infected * decay * delta
