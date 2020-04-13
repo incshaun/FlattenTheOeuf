@@ -30,9 +30,15 @@ var feedbackLabel
 var controlsContainer
 # Button with level select options.
 var levelSelectButton
+# Video player panel
+var controlMovie
+var videoPlayer
+# High score
+var achievementLabel
 
 class LevelDescription:
 	var levelname
+	var rank
 	var gridN
 	var numEgg
 	var rabbitSpeed
@@ -42,8 +48,9 @@ class LevelDescription:
 	var lossTime
 	var winTime
 	
-	func _init (n, g, ne, rs = 2.0, es = 0.35, de = 0.01, inf = 0.02, lt = 10, wt = 5):
+	func _init (n, r, g, ne, rs = 2.0, es = 0.35, de = 0.01, inf = 0.02, lt = 10, wt = 5):
 		levelname = n
+		rank = r
 		gridN = g
 		numEgg = ne
 		rabbitSpeed = rs
@@ -64,10 +71,14 @@ class LevelDescription:
 		gameObject.winTime = winTime
 
 var levels = [ \
-  LevelDescription.new ("Tutorial", 3, 2, 2.0, 0.01), \
-  LevelDescription.new ("Over Easy", 5, 3, 2.0, 0.5), \
-  LevelDescription.new ("Omelette", 6, 6, 2.0, 0.75), \
+  LevelDescription.new ("Tutorial", "Leghorn", 3, 2, 2.0, 0.01), \
+  LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, 2.0, 0.5), \
+  LevelDescription.new ("Omelette", "Deakin Game Development Graduate", 6, 6, 2.0, 0.75), \
 ]
+# current level played.
+var currentLevel = 0
+# best level completed.
+var bestLevel = -1
 
 enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
 
@@ -244,6 +255,9 @@ func checkEndConditions (delta):
 		if countdownTimer > winTime:
 			feedbackLabel.text = "Victory! Game oeufre"
 			gameOverState = GameOver.GameOver
+			if currentLevel > bestLevel:
+				bestLevel = currentLevel
+				achievementLabel.text = "Best rank:\n" + levels[bestLevel].rank
 		elif not stableEggScenario ():
 			gameOverState = GameOver.Running
 			feedbackLabel.text = ""
@@ -292,7 +306,8 @@ func playGame (delta):
 func setupGame ():
 	print ("Ready")
 	
-	var level = levels[levelSelectButton.get_selected_id ()]
+	currentLevel = levelSelectButton.get_selected_id ()
+	var level = levels [currentLevel]
 	level.setConditions (self)
 	
 	infected = 0.0
@@ -344,6 +359,9 @@ func _ready():
 	controlsContainer = get_parent ().get_node ("ControlBox")
 	levelSelectButton = get_parent ().get_node ("ControlBox/LevelSelectButton")
 	addLevels ()
+	controlMovie = get_parent ().get_node ("ControlMovie")
+	videoPlayer = get_parent ().get_node ("ControlMovie/VideoPlayer")
+	achievementLabel = get_parent ().get_node ("ControlBox/AchievementLabel")
 	
 func _process(delta):
 	
@@ -383,3 +401,13 @@ func On_StartButton_pressed():
 	gameOverState = GameOver.Running
 	setupGame ()
 
+func stopIntro ():
+	videoPlayer.stop ()
+	controlMovie.visible = false
+	
+func startIntro ():
+	controlMovie.visible = true
+	videoPlayer.play ()
+	
+func On_VideoPlayer_finished():
+	stopIntro ()

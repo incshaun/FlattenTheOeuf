@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://forestbackgroung.png" type="Texture" id=1]
 [ext_resource path="res://Jellee-Roman.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://InfectionChart.gd" type="Script" id=3]
 [ext_resource path="res://TileRegion.gd" type="Script" id=4]
+[ext_resource path="res://intromovie.ogv" type="VideoStream" id=5]
 
 [sub_resource type="DynamicFont" id=1]
 size = 60
@@ -22,7 +23,11 @@ size = 40
 font_data = ExtResource( 2 )
 
 [sub_resource type="DynamicFont" id=5]
-size = 40
+size = 25
+font_data = ExtResource( 2 )
+
+[sub_resource type="DynamicFont" id=6]
+size = 30
 font_data = ExtResource( 2 )
 
 [node name="Node2D" type="Node2D"]
@@ -90,6 +95,17 @@ custom_colors/font_color = Color( 0.341176, 0.882353, 0.0941176, 1 )
 custom_colors/font_color_pressed = Color( 0.0862745, 0.8, 0.431373, 1 )
 text = "Start"
 
+[node name="IntroPlayButton" type="Button" parent="BaseCanvas/ControlBox"]
+anchor_right = 1.0
+margin_left = 100.0
+margin_top = 400.0
+margin_right = -100.0
+margin_bottom = 155.0
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 0.882353, 0.647059, 0.0941176, 1 )
+custom_colors/font_color_pressed = Color( 0.592157, 0.8, 0.0862745, 1 )
+text = "Play Introduction"
+
 [node name="LevelSelectButton" type="OptionButton" parent="BaseCanvas/ControlBox"]
 anchor_right = 1.0
 margin_left = 100.0
@@ -114,4 +130,42 @@ custom_constants/shadow_offset_x = 3
 custom_constants/shadow_offset_y = 3
 text = "Level Selection"
 align = 1
+
+[node name="AchievementLabel" type="Label" parent="BaseCanvas/ControlBox"]
+anchor_right = 1.0
+margin_left = 100.0
+margin_top = -50.0
+margin_right = -100.0
+margin_bottom = 50.0
+custom_fonts/font = SubResource( 5 )
+custom_colors/font_color = Color( 0.807843, 0.317647, 0.145098, 1 )
+custom_colors/font_color_shadow = Color( 0.631373, 0.556863, 0.556863, 1 )
+custom_constants/shadow_offset_x = 3
+custom_constants/shadow_offset_y = 3
+align = 1
+
+[node name="ControlMovie" type="Control" parent="BaseCanvas"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VideoPlayer" type="VideoPlayer" parent="BaseCanvas/ControlMovie"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+stream = ExtResource( 5 )
+autoplay = true
+expand = false
+
+[node name="Button" type="Button" parent="BaseCanvas/ControlMovie"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 100.0
+margin_top = -100.0
+margin_right = -100.0
+margin_bottom = -50.0
+custom_fonts/font = SubResource( 6 )
+text = "Skip Introduction"
 [connection signal="pressed" from="BaseCanvas/ControlBox/StartGameButton" to="BaseCanvas/TileRegion" method="On_StartButton_pressed"]
+[connection signal="pressed" from="BaseCanvas/ControlBox/IntroPlayButton" to="BaseCanvas/TileRegion" method="startIntro"]
+[connection signal="finished" from="BaseCanvas/ControlMovie/VideoPlayer" to="BaseCanvas/TileRegion" method="On_VideoPlayer_finished"]
+[connection signal="pressed" from="BaseCanvas/ControlMovie/Button" to="BaseCanvas/TileRegion" method="On_VideoPlayer_finished"]
