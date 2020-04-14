@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/rabbitmove.wav-4158657a67c7ac4e5d1cd40dd5ae561e.sample"
+
+[deps]
+
+source_file="res://rabbitmove.wav"
+dest_files=[ "res://.import/rabbitmove.wav-4158657a67c7ac4e5d1cd40dd5ae561e.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=true
+edit/normalize=true
+edit/loop=false
+compress/mode=0

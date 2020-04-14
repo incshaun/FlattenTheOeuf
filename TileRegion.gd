@@ -40,6 +40,10 @@ var videoPlayer
 var achievementLabel
 # Tutorial region
 var tutorialRegion
+# Win sound
+var winSoundPlayer
+# Loss sound
+var lossSoundPlayer
 
 # List of images to show in the tutorial level.
 var tutorialTextures
@@ -246,6 +250,10 @@ func updateInfection (delta):
 						egg.objInstance.get_node ("EggParticles").speed_scale = 0.1 + 2.0 * infected
 						egg.objInstance.get_node ("EggParticles").position = Vector2 (0.5 / gridN, 0.5 / gridN) * rect_size
 						infected += infectionRate * ((infected + 0.01) * susceptible) * delta
+						
+						if not egg.objInstance.get_node ("SoundEffects").playing:
+							egg.objInstance.get_node ("SoundEffects").playing = true
+
 
 	infected -= infected * decay * delta
 	infectionChart.addPoint (infected, delta)
@@ -293,6 +301,7 @@ func checkEndConditions (delta):
 		feedbackLabel.set ("custom_colors/font_color", Color (1,0,0))
 		if countdownTimer <= 0:
 			feedbackLabel.text = "Defences oeuferwhelmed!"
+			lossSoundPlayer.playing = true
 			gameOverState = GameOver.GameOver
 		elif infected < infectionChart.threshold:
 			gameOverState = GameOver.Running
@@ -303,6 +312,7 @@ func checkEndConditions (delta):
 		feedbackLabel.set ("custom_colors/font_color", Color (0,1,0))
 		if countdownTimer > winTime:
 			feedbackLabel.text = "Victory! Game oeufre"
+			winSoundPlayer.playing = true
 			gameOverState = GameOver.GameOver
 			if currentLevel > bestLevel:
 				bestLevel = currentLevel
@@ -401,7 +411,7 @@ func setupGame ():
 		var eggpos = Vector2 (randi () % gridN, randi () % gridN)
 		if levels[currentLevel].startingPoints.size () > i:
 			eggpos = levels[currentLevel].startingPoints[i]
-		print ("Starting", eggpos)
+#		print ("Starting", eggpos)
 		var egg = MoveableObject.new (eggScenes[i % eggScenes.size ()].instance (), eggpos, self)
 		allEggs.append (egg)
 		add_child (egg.objInstance)
@@ -445,6 +455,8 @@ func _ready():
 	videoPlayer = get_parent ().get_node ("ControlMovie/VideoPlayer")
 	achievementLabel = get_parent ().get_node ("ControlBox/AchievementLabel")
 	tutorialRegion = get_parent ().get_node ("TutorialRegion")
+	winSoundPlayer = get_parent ().get_node ("WinSoundPlayer")
+	lossSoundPlayer = get_parent ().get_node ("LossSoundPlayer")
 	
 	tutorialTextures = [ preload ("res://tutorial1.png"), \
 						preload ("res://tutorial2.png"), \
@@ -472,10 +484,12 @@ func _input(event):
 		if event is InputEventMouseButton:
 			if event.button_index == BUTTON_LEFT:
 				var tilePosition = ((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size)
-				var intTilePosition = Vector2 (max (min (int (tilePosition.x), gridN), 0), max (min (int (tilePosition.y), gridN), 0))
+				var intTilePosition = Vector2 (max (min (int (tilePosition.x), gridN - 1), 0), max (min (int (tilePosition.y), gridN - 1), 0))
 				if event.pressed:
 #					print("Left button was clicked at ", event.position, tilePosition, intTilePosition)
 					if bunny.target == ObjectState.Static:
+						bunny.objInstance.get_node ("SoundEffects").playing = true
+
 						highlightEgg (((event.position - rect_position) * Vector2 (gridN, gridN) / rect_size))
 						bunny.end = intTilePosition
 						bunny.target = ObjectState.Moving
@@ -501,3 +515,15 @@ func startIntro ():
 	
 func On_VideoPlayer_finished():
 	stopIntro ()
+
+func muteAll ():
+	AudioServer.set_bus_mute (AudioServer.get_bus_index("Master"), true)
+	
+func unmuteAll ():
+	AudioServer.set_bus_mute (AudioServer.get_bus_index("Master"), false)
+
+func _on_MuteTextureButton_toggled(button_pressed):
+	if button_pressed:
+		muteAll ()
+	else:
+		unmuteAll ()

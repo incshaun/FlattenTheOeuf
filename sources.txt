@@ -10,3 +10,7 @@ ffmpeg for transcoding: ffmpeg -i intromovie.avi -i audio.flac -qscale:v 4 -filt
 Wicker, https://cc0textures.com/view?id=Wicker004, The assets on CC0 Textures however are licensed under the Creative Commons CC0 License.
 
 Cursor31, https://iconmonstr.com/cursor-31-png/, Licensee may use the Work in non-commercial and commercial projects, services or products without attribution.
+
+Audio9, https://iconmonstr.com/audio-9-png/, Licensee may use the Work in non-commercial and commercial projects, services or products without attribution.
+
+Audio5, https://iconmonstr.com/audio-5-png/, Licensee may use the Work in non-commercial and commercial projects, services or products without attribution.

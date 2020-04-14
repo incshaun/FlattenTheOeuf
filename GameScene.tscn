@@ -1,10 +1,14 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://forestbackgroung.png" type="Texture" id=1]
 [ext_resource path="res://Jellee-Roman.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://InfectionChart.gd" type="Script" id=3]
 [ext_resource path="res://TileRegion.gd" type="Script" id=4]
-[ext_resource path="res://intromovie.webm" type="VideoStream" id=5]
+[ext_resource path="res://losssound.wav" type="AudioStream" id=5]
+[ext_resource path="res://winsound.wav" type="AudioStream" id=6]
+[ext_resource path="res://unmute.png" type="Texture" id=7]
+[ext_resource path="res://mute.png" type="Texture" id=8]
+[ext_resource path="res://intromovie.webm" type="VideoStream" id=9]
 
 [sub_resource type="DynamicFont" id=1]
 size = 60
@@ -84,6 +88,14 @@ anchor_right = 1.0
 margin_top = 150.0
 margin_bottom = 400.0
 
+[node name="LossSoundPlayer" type="AudioStreamPlayer2D" parent="BaseCanvas"]
+position = Vector2( 240, 750 )
+stream = ExtResource( 5 )
+
+[node name="WinSoundPlayer" type="AudioStreamPlayer2D" parent="BaseCanvas"]
+position = Vector2( 240, 750 )
+stream = ExtResource( 6 )
+
 [node name="ControlBox" type="Control" parent="BaseCanvas"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -103,7 +115,7 @@ text = "Start"
 [node name="IntroPlayButton" type="Button" parent="BaseCanvas/ControlBox"]
 anchor_right = 1.0
 margin_left = 100.0
-margin_top = 400.0
+margin_top = 500.0
 margin_right = -100.0
 margin_bottom = 155.0
 custom_fonts/font = SubResource( 3 )
@@ -125,7 +137,7 @@ align = 1
 [node name="LevelLabel" type="Label" parent="BaseCanvas/ControlBox"]
 anchor_right = 1.0
 margin_left = 100.0
-margin_top = 200.0
+margin_top = 220.0
 margin_right = -100.0
 margin_bottom = 250.0
 custom_fonts/font = SubResource( 5 )
@@ -149,6 +161,17 @@ custom_constants/shadow_offset_x = 3
 custom_constants/shadow_offset_y = 3
 align = 1
 
+[node name="MuteTextureButton" type="TextureButton" parent="BaseCanvas/ControlBox"]
+anchor_right = 1.0
+margin_left = 240.0
+margin_top = 350.0
+margin_right = -240.0
+margin_bottom = 400.0
+toggle_mode = true
+texture_normal = ExtResource( 7 )
+texture_pressed = ExtResource( 8 )
+expand = true
+
 [node name="ControlMovie" type="Control" parent="BaseCanvas"]
 visible = false
 anchor_right = 1.0
@@ -157,7 +180,7 @@ anchor_bottom = 1.0
 [node name="VideoPlayer" type="VideoPlayer" parent="BaseCanvas/ControlMovie"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-stream = ExtResource( 5 )
+stream = ExtResource( 9 )
 expand = false
 
 [node name="Button" type="Button" parent="BaseCanvas/ControlMovie"]
@@ -172,5 +195,6 @@ custom_fonts/font = SubResource( 6 )
 text = "Skip Introduction"
 [connection signal="pressed" from="BaseCanvas/ControlBox/StartGameButton" to="BaseCanvas/TileRegion" method="On_StartButton_pressed"]
 [connection signal="pressed" from="BaseCanvas/ControlBox/IntroPlayButton" to="BaseCanvas/TileRegion" method="startIntro"]
+[connection signal="toggled" from="BaseCanvas/ControlBox/MuteTextureButton" to="BaseCanvas/TileRegion" method="_on_MuteTextureButton_toggled"]
 [connection signal="finished" from="BaseCanvas/ControlMovie/VideoPlayer" to="BaseCanvas/TileRegion" method="On_VideoPlayer_finished"]
 [connection signal="pressed" from="BaseCanvas/ControlMovie/Button" to="BaseCanvas/TileRegion" method="On_VideoPlayer_finished"]
