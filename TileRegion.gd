@@ -92,6 +92,8 @@ var levels = [ \
   LevelDescription.new ("Over Easy", "Sous Chef", 5, 3, [Vector2 (1, 4), Vector2 (3, 2), Vector2 (4, 2)], 2.0, 0.5), \
   LevelDescription.new ("Scrambled", "Dasypeltis scabra", 5, 4, [Vector2 (3, 0), Vector2 (0, 3), Vector2 (0, 2), Vector2 (2, 4)], 2.0, 0.75), \
   LevelDescription.new ("Oogenera", "Paleggontologist", 10, 8, [Vector2 (3, 0), Vector2 (5, 3), Vector2 (5, 2), Vector2 (7, 9), Vector2 (6, 8), Vector2 (5, 5), Vector2 (4, 7), Vector2 (0, 6)], 2.0, 0.75), \
+  LevelDescription.new ("Roadrunner", "Wile E. Coyote", 7, 7, [Vector2 (0, 2), Vector2 (1, 5), Vector2 (2, 6), Vector2 (3, 0), Vector2 (4, 4), Vector2 (5, 2), Vector2 (6, 5)], 4.0, 1.0), \
+  LevelDescription.new ("3-legged Chicken", "Flash Gordon", 8, 8, [Vector2 (0, 0), Vector2 (1, 1), Vector2 (4, 0), Vector2 (5, 1), Vector2 (4, 4), Vector2 (5, 5), Vector2 (6, 6), Vector2 (7, 7)], 1.0, 3.0, 0.05, 0.01, 60, 5), \
   LevelDescription.new ("Omelette", "Deakin Game Development Graduate", 6, 6, [Vector2 (2, 5), Vector2 (4, 1), Vector2 (0, 1), Vector2 (5, 3), Vector2 (1, 3), Vector2 (5, 5)], 2.0, 0.75), \
 ]
 # current level played.
@@ -99,7 +101,7 @@ var currentLevel = 0
 # best level completed.
 var bestLevel = -1
 
-enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried }
+enum ObjectState { Static, Moving, Holding, Carrying, BeingCarried, Infecting }
 
 class MoveableObject:
 	var region
@@ -219,7 +221,7 @@ func highlightEgg (tilePos):
 	var closestEgg = null
 	var closestDistance = null
 	for egg in allEggs:
-		if egg.target == ObjectState.Static or egg.target == ObjectState.Moving:
+		if egg.target == ObjectState.Static or egg.target == ObjectState.Moving or egg.target == ObjectState.Infecting:
 			var dist = (egg.objTilePosition + Vector2 (0.5, 0.5) - tilePos).length ()
 			if closestEgg == null or dist < closestDistance:
 				closestEgg = egg
@@ -241,9 +243,9 @@ func updateInfection (delta):
 	var susceptible = populationSize - infected
 	for egg in allEggs:
 		egg.objInstance.get_node ("EggParticles").visible = false
-		if egg.target == ObjectState.Static:
+		if egg.target == ObjectState.Static or egg.target == ObjectState.Infecting:
 			for otherEgg in allEggs:
-				if otherEgg != egg and otherEgg.target == ObjectState.Static:
+				if otherEgg != egg and (otherEgg.target == ObjectState.Static or otherEgg.target == ObjectState.Infecting):
 					var pdistance = (egg.objTilePosition - otherEgg.objTilePosition).length ()
 					if pdistance < 0.1:
 						egg.objInstance.get_node ("EggParticles").visible = true
@@ -251,8 +253,9 @@ func updateInfection (delta):
 						egg.objInstance.get_node ("EggParticles").position = Vector2 (0.5 / gridN, 0.5 / gridN) * rect_size
 						infected += infectionRate * ((infected + 0.01) * susceptible) * delta
 						
-						if not egg.objInstance.get_node ("SoundEffects").playing:
+						if egg.target == ObjectState.Static and not egg.objInstance.get_node ("SoundEffects").playing:
 							egg.objInstance.get_node ("SoundEffects").playing = true
+							egg.target = ObjectState.Infecting
 
 
 	infected -= infected * decay * delta
@@ -262,11 +265,11 @@ func updateInfection (delta):
 func stableEggScenario ():
 	var stable = true
 	for egg in allEggs:
-		if egg.target == ObjectState.Static:
+		if egg.target == ObjectState.Static or egg.target == ObjectState.Infecting:
 			for otherEgg in allEggs:
 #				print ("E ", egg, otherEgg)
 				if egg != otherEgg:
-					if otherEgg.target == ObjectState.Static:
+					if otherEgg.target == ObjectState.Static or otherEgg.target == ObjectState.Infecting:
 						var posDiff = egg.objTilePosition - otherEgg.objTilePosition
 						var pdx = int (posDiff.x)
 						var pdy = int (posDiff.y)
@@ -348,13 +351,13 @@ func playGame (delta):
 		
 	# Find any eggs that can move.
 	for egg in allEggs:
-		if egg.target == ObjectState.Static:
+		if egg.target == ObjectState.Static or egg.target == ObjectState.Infecting:
 			# stationary egg. See if any other stationary eggs are in sight.
 			# if so, find the closest.
 			var bestOther = null
 			var bestDistance = null
 			for otherEgg in allEggs:
-				if otherEgg != egg and otherEgg.target == ObjectState.Static:
+				if otherEgg != egg and (otherEgg.target == ObjectState.Static or otherEgg.target == ObjectState.Infecting):
 					var posDiff = egg.objTilePosition - otherEgg.objTilePosition
 					var pdx = int (posDiff.x)
 					var pdy = int (posDiff.y)
